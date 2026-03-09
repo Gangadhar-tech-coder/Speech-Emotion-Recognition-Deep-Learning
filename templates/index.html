@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Emotion Recognition</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --card: #111827;
+            --card2: #1a2236;
+            --accent: #6c63ff;
+            --accent2: #ff6584;
+            --text: #e8eaf0;
+            --muted: #7a8499;
+            --border: rgba(108, 99, 255, 0.2);
+            --glow: rgba(108, 99, 255, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background image overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: url('static/bg.jpg') center/cover no-repeat;
+            opacity: 0.08;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Animated gradient orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            animation: float 8s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orb1 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent);
+            top: -100px;
+            left: -100px;
+        }
+
+        .orb2 {
+            width: 300px;
+            height: 300px;
+            background: var(--accent2);
+            bottom: -50px;
+            right: -50px;
+            animation-delay: -4s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px) scale(1);
+            }
+
+            50% {
+                transform: translateY(-30px) scale(1.05);
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeDown 0.8s ease;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(108, 99, 255, 0.15);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            font-family: 'Space Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 50%, var(--accent2) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        /* Main Card */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 24px;
+            animation: fadeUp 0.8s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Space Mono', monospace;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 50px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(108, 99, 255, 0.03);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(108, 99, 255, 0.08);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(108, 99, 255, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3.5rem;
+            margin-bottom: 16px;
+            display: block;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .upload-zone h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .upload-zone p {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* File info */
+        .file-info {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-top: 16px;
+        }
+
+        .file-info.show {
+            display: flex;
+        }
+
+        .file-info .file-icon {
+            font-size: 1.5rem;
+        }
+
+        .file-info .file-name {
+            flex: 1;
+            font-weight: 500;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-info .file-size {
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        /* Analyze Button */
+        .btn-analyze {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--accent), #8b7cf6);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-analyze::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #8b7cf6, var(--accent2));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .btn-analyze:hover::before {
+            opacity: 1;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px var(--glow);
+        }
+
+        .btn-analyze:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading p {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        /* Result Section */
+        .result-section {
+            display: none;
+            animation: fadeUp 0.6s ease;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        /* Emotion Result Card */
+        .emotion-card {
+            background: var(--card2);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .emotion-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 0%, var(--emotion-color, var(--accent)) 0%, transparent 60%);
+            opacity: 0.08;
+        }
+
+        .emotion-emoji {
+            font-size: 5rem;
+            display: block;
+            margin-bottom: 16px;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .emotion-label {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-transform: capitalize;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .confidence-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 30px;
+            padding: 8px 20px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .confidence-badge span {
+            color: white;
+            font-weight: 700;
+        }
+
+        /* Confidence bar */
+        .confidence-bar-wrap {
+            margin-top: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .confidence-bar {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+            width: 0%;
+        }
+
+        /* All emotions breakdown */
+        .breakdown {
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+        }
+
+        .breakdown-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Space Mono', monospace;
+            margin-bottom: 20px;
+        }
+
+        .emotion-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .emotion-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .emotion-row .emo-name {
+            width: 90px;
+            font-size: 0.85rem;
+            text-transform: capitalize;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+        .emotion-row .emo-bar-wrap {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .emotion-row .emo-bar {
+            height: 100%;
+            border-radius: 6px;
+            background: var(--accent);
+            transition: width 1s ease;
+            width: 0%;
+        }
+
+        .emotion-row.top .emo-bar {
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+        }
+
+        .emotion-row.top .emo-name {
+            color: white;
+            font-weight: 600;
+        }
+
+        .emotion-row .emo-pct {
+            width: 45px;
+            text-align: right;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+        /* Reset button */
+        .btn-reset {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-reset:hover {
+            color: white;
+            border-color: var(--accent);
+            background: rgba(108, 99, 255, 0.08);
+        }
+
+        /* Stats bar */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+            animation: fadeUp 0.8s ease 0.2s both;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent);
+            font-family: 'Space Mono', monospace;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Error */
+        .error-box {
+            display: none;
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            border-radius: 12px;
+            padding: 16px 20px;
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .error-box.show {
+            display: block;
+        }
+
+        /* Record Button */
+        .record-container {
+            text-align: center;
+            margin: 20px 0 0 0;
+            padding: 24px;
+            background: rgba(108, 99, 255, 0.03);
+            border: 1px dashed var(--border);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .record-divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: var(--muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .record-divider::before,
+        .record-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .record-divider span {
+            padding: 0 15px;
+        }
+
+        .btn-record {
+            padding: 14px 28px;
+            background: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+            border-radius: 30px;
+            font-size: 1.05rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-record:hover {
+            background: rgba(108, 99, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(108, 99, 255, 0.15);
+        }
+
+        .btn-record.recording {
+            border-color: var(--accent2);
+            color: var(--accent2);
+            background: rgba(255, 101, 132, 0.1);
+            animation: pulse-record 1.5s infinite;
+        }
+
+        @keyframes pulse-record {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 101, 132, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(255, 101, 132, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 101, 132, 0);
+            }
+        }
+
+        .recording-status {
+            display: none;
+            margin-top: 16px;
+            color: var(--accent2);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--muted);
+            font-size: 0.85rem;
+            animation: fadeUp 0.8s ease 0.4s both;
+        }
+
+        /* Animations */
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .card {
+                padding: 24px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+
+    <div class="container">
+
+        <!-- Header -->
+        <header>
+            <div class="badge">🎤 Deep Learning Project</div>
+            <h1>Speech Emotion<br>Recognition</h1>
+            <p class="subtitle">Upload an audio file and let AI detect the emotion</p>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">8</div>
+                <div class="stat-label">Emotions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">92%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">CNN</div>
+                <div class="stat-label">Model</div>
+            </div>
+        </div>
+
+        <!-- Upload Card -->
+        <div class="card" id="uploadCard">
+            <div class="card-title">📁 Upload or Record Audio</div>
+
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="audioFile" accept=".wav,.mp3,.ogg,.flac,.webm" />
+                <span class="upload-icon">🎵</span>
+                <h3>Drop your audio file here</h3>
+                <p>Supports WAV, MP3, OGG, FLAC, WEBM formats</p>
+            </div>
+
+            <div class="record-divider"><span>OR LIVE RECORD</span></div>
+
+            <div class="record-container">
+                <button id="recordBtn" class="btn-record">
+                    <span id="recordIcon">🎤</span>
+                    <span id="recordText">Start Live Recording</span>
+                </button>
+                <div id="recordingStatus" class="recording-status">
+                    Recording: <span id="recordTime">0</span>s
+                </div>
+            </div>
+
+            <div class="file-info" id="fileInfo">
+                <span class="file-icon">🎵</span>
+                <span class="file-name" id="fileName">filename.wav</span>
+                <span class="file-size" id="fileSize">0 KB</span>
+            </div>
+
+            <div class="error-box" id="errorBox">⚠️ <span id="errorText">Error message</span></div>
+
+            <button class="btn-analyze" id="analyzeBtn" disabled>
+                <span class="btn-text">🔍 Analyze Emotion</span>
+            </button>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Analyzing audio features...</p>
+            <p style="font-size:0.8rem; margin-top:8px; opacity:0.5;">Extracting MFCC + Chroma + MEL features</p>
+        </div>
+
+        <!-- Result -->
+        <div class="result-section" id="resultSection">
+
+            <div class="emotion-card" id="emotionCard">
+                <span class="emotion-emoji" id="emotionEmoji">😊</span>
+                <div class="emotion-label" id="emotionLabel">Happy</div>
+                <div class="confidence-badge">
+                    Confidence: <span id="confidenceValue">0</span>%
+                </div>
+                <div class="confidence-bar-wrap">
+                    <div class="confidence-bar" id="confidenceBar"></div>
+                </div>
+            </div>
+
+            <div class="breakdown">
+                <div class="breakdown-title">All Emotion Probabilities</div>
+                <div id="emotionBreakdown"></div>
+            </div>
+
+            <button class="btn-reset" id="resetBtn">↩ Analyze Another File</button>
+        </div>
+
+        <footer>
+            Speech Emotion Recognition using Deep Learning &nbsp;|&nbsp; CNN Model &nbsp;|&nbsp; RAVDESS Dataset
+        </footer>
+
+    </div>
+
+    <script>
+        const audioFile = document.getElementById('audioFile');
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const loading = document.getElementById('loading');
+        const resultSection = document.getElementById('resultSection');
+        const uploadCard = document.getElementById('uploadCard');
+        const errorBox = document.getElementById('errorBox');
+        const resetBtn = document.getElementById('resetBtn');
+
+        const recordBtn = document.getElementById('recordBtn');
+        const recordIcon = document.getElementById('recordIcon');
+        const recordText = document.getElementById('recordText');
+        const recordingStatus = document.getElementById('recordingStatus');
+        const recordTime = document.getElementById('recordTime');
+
+        let selectedFile = null;
+
+        // Recording variables
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let recordingInterval;
+        let seconds = 0;
+
+        // Drag & drop
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+
+        audioFile.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            const allowed = ['audio/wav', 'audio/mpeg', 'audio/ogg', 'audio/flac', 'audio/x-wav', 'audio/webm'];
+            const ext = file.name.split('.').pop().toLowerCase();
+            const allowedExt = ['wav', 'mp3', 'ogg', 'flac', 'webm'];
+
+            if (!allowedExt.includes(ext)) {
+                showError('Please upload a WAV, MP3, OGG, FLAC, or WEBM file.');
+                return;
+            }
+
+            hideError();
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatSize(file.size);
+            fileInfo.classList.add('show');
+            analyzeBtn.disabled = false;
+        }
+
+        function audioBufferToWav(buffer) {
+            let numOfChan = buffer.numberOfChannels,
+                length = buffer.length * numOfChan * 2 + 44,
+                arrayBuffer = new ArrayBuffer(length),
+                view = new DataView(arrayBuffer),
+                channels = [], i, sample,
+                offset = 0,
+                pos = 0;
+
+            function setUint16(data) { view.setUint16(pos, data, true); pos += 2; }
+            function setUint32(data) { view.setUint32(pos, data, true); pos += 4; }
+
+            setUint32(0x46464952); // "RIFF"
+            setUint32(length - 8);
+            setUint32(0x45564157); // "WAVE"
+            setUint32(0x20746d66); // "fmt "
+            setUint32(16);
+            setUint16(1);
+            setUint16(numOfChan);
+            setUint32(buffer.sampleRate);
+            setUint32(buffer.sampleRate * 2 * numOfChan);
+            setUint16(numOfChan * 2);
+            setUint16(16);
+            setUint32(0x61746164); // "data"
+            setUint32(length - pos - 4);
+
+            for (i = 0; i < buffer.numberOfChannels; i++) {
+                channels.push(buffer.getChannelData(i));
+            }
+
+            while (pos < length) {
+                for (i = 0; i < numOfChan; i++) {
+                    sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+                    view.setInt16(pos, sample, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+            return new Blob([arrayBuffer], { type: "audio/wav" });
+        }
+
+        // --- Live Recording Logic ---
+        recordBtn.addEventListener('click', async () => {
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        try {
+                            const arrayBuffer = await audioBlob.arrayBuffer();
+                            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                            const wavBlob = audioBufferToWav(audioBuffer);
+                            const file = new File([wavBlob], "live_recording.wav", { type: "audio/wav", lastModified: Date.now() });
+                            handleFile(file);
+
+                            // Release mic
+                            stream.getTracks().forEach(track => track.stop());
+
+                            // Auto-analyze immediately after stopping
+                            analyzeBtn.click();
+                        } catch (e) {
+                            console.error(e);
+                            showError("Could not process audio format. Please try again.");
+                        }
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.classList.add('recording');
+                    recordText.textContent = 'Stop Recording';
+                    recordIcon.textContent = '⏹️';
+                    recordingStatus.style.display = 'block';
+
+                    seconds = 0;
+                    recordTime.textContent = seconds;
+                    recordingInterval = setInterval(() => {
+                        seconds++;
+                        recordTime.textContent = seconds;
+                        // Suggest stopping after 5-6s, model needs 3 but extra handles padding
+                    }, 1000);
+
+                    // clear selection if any
+                    selectedFile = null;
+                    fileInfo.classList.remove('show');
+                    analyzeBtn.disabled = true;
+
+                } catch (err) {
+                    showError("Microphone access denied or not supported by your browser.");
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                clearInterval(recordingInterval);
+                recordBtn.classList.remove('recording');
+                recordText.textContent = 'Start Live Recording';
+                recordIcon.textContent = '🎤';
+                recordingStatus.style.display = 'none';
+            }
+        });
+
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+
+            // Show loading
+            uploadCard.style.display = 'none';
+            loading.classList.add('show');
+            resultSection.classList.remove('show');
+
+            const formData = new FormData();
+            formData.append('audio', selectedFile);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                loading.classList.remove('show');
+
+                if (data.error) {
+                    uploadCard.style.display = 'block';
+                    showError(data.error);
+                    return;
+                }
+
+                showResult(data);
+
+            } catch (err) {
+                loading.classList.remove('show');
+                uploadCard.style.display = 'block';
+                showError('Network error. Please try again.');
+            }
+        });
+
+        function showResult(data) {
+            // Set emotion card color
+            document.getElementById('emotionCard').style.setProperty('--emotion-color', data.color);
+            document.getElementById('emotionEmoji').textContent = data.emoji;
+            document.getElementById('emotionLabel').textContent = data.emotion.charAt(0).toUpperCase() + data.emotion.slice(1);
+            document.getElementById('emotionLabel').style.color = data.color;
+            document.getElementById('confidenceValue').textContent = data.confidence;
+
+            resultSection.classList.add('show');
+
+            // Animate confidence bar
+            setTimeout(() => {
+                document.getElementById('confidenceBar').style.width = data.confidence + '%';
+            }, 100);
+
+            // Build emotion breakdown
+            const breakdown = document.getElementById('emotionBreakdown');
+            breakdown.innerHTML = '';
+
+            const sorted = Object.entries(data.all_emotions)
+                .sort((a, b) => b[1] - a[1]);
+
+            sorted.forEach(([emo, pct], i) => {
+                const isTop = i === 0;
+                const row = document.createElement('div');
+                row.className = `emotion-row ${isTop ? 'top' : ''}`;
+                row.innerHTML = `
+                    <span class="emo-name">${isTop ? '🏆 ' : ''}${emo}</span>
+                    <div class="emo-bar-wrap">
+                        <div class="emo-bar" style="width:0%" data-width="${pct}"></div>
+                    </div>
+                    <span class="emo-pct">${pct}%</span>
+                `;
+                breakdown.appendChild(row);
+            });
+
+            // Animate bars
+            setTimeout(() => {
+                document.querySelectorAll('.emo-bar').forEach(bar => {
+                    bar.style.width = bar.dataset.width + '%';
+                });
+            }, 200);
+        }
+
+        resetBtn.addEventListener('click', () => {
+            selectedFile = null;
+            audioFile.value = '';
+            fileInfo.classList.remove('show');
+            analyzeBtn.disabled = true;
+            resultSection.classList.remove('show');
+            uploadCard.style.display = 'block';
+            hideError();
+        });
+
+        function showError(msg) {
+            document.getElementById('errorText').textContent = msg;
+            errorBox.classList.add('show');
+        }
+
+        function hideError() { errorBox.classList.remove('show'); }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+    </script>
+</body>
+
+</html>
