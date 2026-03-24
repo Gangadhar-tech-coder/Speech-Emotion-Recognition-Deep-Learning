@@ -1,7 +1,7 @@
 flask
-tensorflow-cpu>=2.18.0
-scipy==1.11.4
-librosa
+tensorflow-cpu==2.15.0
 numpy<2.0.0
-gunicorn
+librosa
 pydub
+scikit-learn
+gunicorn
