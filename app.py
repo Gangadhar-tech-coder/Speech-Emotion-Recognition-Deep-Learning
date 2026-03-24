@@ -165,5 +165,11 @@ def predict():
 
 
 if __name__ == '__main__':
-    os.makedirs('static/uploads', exist_ok=True)
-    app.run(debug=True, port=5000)
+    # Ensure the upload folder exists
+    upload_path = os.path.join(os.getcwd(), 'static/uploads')
+    os.makedirs(upload_path, exist_ok=True)
+    
+    # Get port from Render, default to 10000 for local testing
+    port = int(os.environ.get("PORT", 10000))
+    # host='0.0.0.0' is REQUIRED for cloud deployment
+    app.run(host='0.0.0.0', port=port)
