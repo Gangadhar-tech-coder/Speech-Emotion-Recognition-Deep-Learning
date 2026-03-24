@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import librosa
 from flask import Flask, render_template, request, jsonify
-from tensorflow.keras.models import load_model
+from keras.models import load_model
 from werkzeug.utils import secure_filename
 from pydub import AudioSegment
 
@@ -165,11 +165,11 @@ def predict():
 
 
 if __name__ == '__main__':
-    # Ensure the upload folder exists
-    upload_path = os.path.join(os.getcwd(), 'static/uploads')
-    os.makedirs(upload_path, exist_ok=True)
-    
-    # Get port from Render, default to 10000 for local testing
+    # Use absolute paths for the upload folder
+    upload_path = os.path.join(os.getcwd(), 'static', 'uploads')
+    if not os.path.exists(upload_path):
+        os.makedirs(upload_path, exist_ok=True)
+        
+    # Bind to 0.0.0.0 and use Render's dynamic port
     port = int(os.environ.get("PORT", 10000))
-    # host='0.0.0.0' is REQUIRED for cloud deployment
     app.run(host='0.0.0.0', port=port)
